@@ -1,0 +1,10 @@
+ReverseRowInterleave:	0
+RSrcToIso:	570.0
+NChannels:	672
+AnodeAngle:	0.1222
+RSrcToDet:	1040.0
+NProjTurn:	1160
+ReverseChanInterleave:	0
+ThetaCone:	0.031576
+CentralChannel:	335.50
+FanAngleInc:	0.00135087719298

@@ -1,0 +1,14 @@
+H2O2	1.450
+ethanol	0.789
+saline035	1.041
+saline050	1.058
+saline100	1.116
+saline130	1.151
+saline150	1.174
+saline060	1.070
+saline070	1.081
+saline080	1.093
+saline090	1.104
+saline110	1.128
+saline120	1.139
+saline140	1.162

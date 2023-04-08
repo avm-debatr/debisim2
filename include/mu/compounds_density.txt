@@ -1,0 +1,15 @@
+air	0.001293
+acetal	1.500
+neoprene	1.230
+polyethylene	0.951
+polystyrene	1.050
+pyrex	2.889
+water	1.000
+salt	2.160
+bone	1.320
+acrylic	1.180
+teflon	2.300
+pvc	1.700
+polyester	1.522
+nylon6	1.084
+bakelite	1.300
