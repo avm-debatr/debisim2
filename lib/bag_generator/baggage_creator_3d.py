@@ -772,9 +772,10 @@ class Object3D(object):
         mask = sptx.rotate(mask, theta[1], axes=(2,1), order=0)
         mask = sptx.rotate(mask, theta[2], axes=(0,2), order=0)
 
-        mask = sktr.rescale(mask, scale, preserve_range=True)
+        mask = sktr.rescale(mask.astype(np.float), scale, preserve_range=True)
 
         mask[mask < 0.5] = 0
+        mask[mask > 1]   = 1
 
         box_coord = mask.nonzero()
         box_dim = box_coord[0].max()-box_coord[0].min()+1, \

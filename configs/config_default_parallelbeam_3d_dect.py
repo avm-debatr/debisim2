@@ -93,7 +93,8 @@ material_pdf = [0.3] + [0.05/3]*3 + [0.65/11]*11
 liquid_pdf = [1/2., 1/2.]
 
 # using custom shapes other than fixed geometries
-custom_objects = os.listdir(CUSTOM_SHAPES_DIR)
+custom_objects = [os.path.join(CUSTOM_SHAPES_DIR, s)
+                  for s in os.listdir(CUSTOM_SHAPES_DIR)]
 
 bag_creator_args = dict(
     # list of materials/liquids to simulate -----------------------------------
@@ -113,6 +114,7 @@ bag_creator_args = dict(
     dim_range=(20,70),                   # min-max dims of simulated object
     number_of_objects=range(30, 40),     # number of objects in each bag
     custom_objects=custom_objects, # if custom objects are to be specified
+    custom_obj_prob=0.3,
     # -------------------------------------------------------------------------
     # specifications for metals / target objects
     metal_dict={'metal_amt':  1e2, 'metal_size': (3,5)},
