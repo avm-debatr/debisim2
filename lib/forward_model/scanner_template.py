@@ -117,6 +117,8 @@ import lib.forward_model.template_siemens_definition_as as siemens_definition_as
 import lib.forward_model.template_siemens_force as siemens_force
 import lib.forward_model.template_siemens_sensation_32 as siemens_sensation_32
 import lib.forward_model.template_default_parallelbeam_scanner as default_scanner_parallel
+import lib.forward_model.template_default_two_view_conebeam as default_two_view_conebeam
+import lib.forward_model.template_default_two_view_parallelbeam as default_two_view_parallel
 
 # =============================================================================
 # Dictionary for Default Machine Geometry - the default machine is a Spiral
@@ -462,76 +464,97 @@ class ScannerTemplate(object):
         self.vecs = vecs
     # -------------------------------------------------------------------------
 
-    def _set_cone_geometry(self, n_rot, view_stride):
+    def _set_cone_geometry(self, n_rot=1, view_stride=1):
         """
         -----------------------------------------------------------------------
         Setup geometry necessary for circular Cone Beam CT geometry.
-        
+
         :param n_rot:       Number of turns made by CBCT scanner
-                            (Must cover the z-length of the input volumetric 
-                            image - else the image will be cropped - a good 
+                            (Must cover the z-length of the input volumetric
+                            image - else the image will be cropped - a good
                             estimate is vol_image_z_length/pitch)
-        :param view_stride: number of views to skip (can be used to decrease 
+        :param view_stride: number of views to skip (can be used to decrease
                             projection resolution)
-        :return 
+        :return
         -----------------------------------------------------------------------
         """
 
         n_views = self.recon_params['n_views']
-        pitch   = self.recon_params['pitch']
-        fan_angle_0 = self.recon_params['fan_angle_0']
-        fan_angle_inc = self.recon_params['fan_angle_inc']
+        pitch = self.recon_params['pitch']
+        # fan_angle_0   = self.recon_params['fan_angle_0']
+        # fan_angle_inc = self.recon_params['fan_angle_inc']
 
         # Reconstruction-specific geometry parameter
-        self.machine_geometry['pitch'] =  pitch
+        self.machine_geometry['pitch'] = pitch
 
         g = {}
+
+        # gives the angle for each view of each projection
         g['views_per_rot'] = n_views / view_stride
         g['n_views'] = int(g['views_per_rot'] * n_rot)
-        theta = linspace(0.0, 360.0 * n_rot, g['n_views'], endpoint=False)
+        theta = linspace(0.0, 360.0 * n_rot,
+                         g['n_views'],
+                         endpoint=False)
         g['angles'] = deg2rad(mod(theta, 360))
-        g['n_slices'] = int(
-            self.machine_geometry['pitch'] * n_rot / self.recon_params['slice_thickness'])
-        g['src_angles'] = repeat(g['angles'], self.machine_geometry['n_gums'])
-        # Offsets for section centers
-        det_angles = repeat(g['angles'], self.machine_geometry['n_gums'])
-        det_angles = det_angles.reshape(
-            g['n_views'], self.machine_geometry['n_gums']) + \
-                     self.machine_geometry['angle_offsets'].reshape(1, self.machine_geometry['n_gums'])
-        g['det_angles'] = det_angles.flatten()
-        translation = linspace(0.0, self.machine_geometry['pitch'] * n_rot, g['n_views'],
-                               endpoint=False)
-        g['translation'] = translation
 
-        fan_angle = fan_angle_0 + fan_angle_inc * np.arange(1024)
-        equi_space_weights = (np.cos(np.deg2rad(self.machine_geometry['columnAngle'])) /
-                              np.cos(np.deg2rad(fan_angle)))
-        g['equi_space_weights'] = equi_space_weights
-        w_1 = (np.arange(
-            self.machine_geometry['gums_row_count'] * (g['views_per_rot'] + 1))) * 1.0 / g[
-                  'views_per_rot']
-        w_1 = np.hstack((w_1, w_1[::-1][self.machine_geometry['gums_row_count']:]))
-        w_1 = w_1.reshape(2 * g['views_per_rot'] + 1,
-                          self.machine_geometry['gums_row_count']).T
-        g['w_1'] = w_1
-        w_f = (np.arange(g['views_per_rot'] + 1)) * 1.0 / g['views_per_rot']
-        w_b = w_f[::-1]
-        g['w_b'] = w_b
+        # no. of slices = pitch x no of rotations / slice thickness
+        g['n_slices'] = int(
+            self.machine_geometry['pitch'] * n_rot
+            / self.recon_params['slice_thickness'])
+        # g['src_angles'] = repeat(g['angles'],
+        #                          self.machine_geometry['n_gums'])
+
+        # Offsets for section centers
+        # det_angles = repeat(g['angles'],
+        #                     self.machine_geometry['n_gums'])
+        #
+        # det_angles = det_angles.reshape(g['n_views'],
+        #                                 self.machine_geometry['n_gums']) \
+        #                                 + self.machine_geometry['angle_offsets'].reshape(1,
+        #                                                                                  self.machine_geometry['n_gums'])
+        # g['det_angles'] = det_angles.flatten()
+        g['src_angles'] = g['angles']
+        g['det_angles'] = g['angles']
+        # translation = linspace(0.0, self.machine_geometry['pitch'] * n_rot, g['n_views'],
+        #                        endpoint=False)
+        # g['translation'] = translation
+
+        # from flat panel detector to curved panel detector
+
+        # fan_angle = fan_angle_0 + fan_angle_inc * np.arange(1024)
+        # equi_space_weights = (np.cos(np.deg2rad(self.machine_geometry['columnAngle'])) /
+        #                       np.cos(np.deg2rad(fan_angle)))
+        # g['equi_space_weights'] = equi_space_weights
+        # w_1 = (np.arange(
+        #     self.machine_geometry['gums_row_count'] * (g['views_per_rot'] + 1))) * 1.0 / g[
+        #           'views_per_rot']
+        # w_1 = np.hstack((w_1, w_1[::-1][self.machine_geometry['gums_row_count']:]))
+        # w_1 = w_1.reshape(2 * g['views_per_rot'] + 1,
+        #                   self.machine_geometry['gums_row_count']).T
+        # g['w_1'] = w_1
+        # w_f = (np.arange(g['views_per_rot'] + 1)) * 1.0 / g['views_per_rot']
+        # w_b = w_f[::-1]
+        # g['w_b'] = w_b
 
         g['recon_slice_no'] = 63
         g['view_stride'] = view_stride
 
+        # create attribute fro mrecon geometry
         self.recon_geometry = g
-        # Astra GPU projector with helical cone beam, alternating array
-        self.proj_geom = astra.create_proj_geom('cone',
-                                                self.machine_geometry['sens_spacing_x'] * 2,
-                                                self.machine_geometry['sens_spacing_y'],
-                                                self.machine_geometry['det_row_count'],
-                                                self.machine_geometry['n_sens_x'] / 2,
-                                                g['angles'],
-                                                self.machine_geometry['source_origin'],
-                                                self.machine_geometry['origin_det'])
+
+        # Astra GPU projector with circular cone beam
+        self.proj_geom = astra.create_proj_geom(
+            'cone',  # type of geometry
+            self.machine_geometry['sens_spacing_x'],  # horizontal spacing between detector cells
+            self.machine_geometry['sens_spacing_y'],  # vertical spacing between detector cells
+            self.machine_geometry['det_row_count'],   # number of detector rows
+            self.machine_geometry['n_sens_x'],        # number of detector columns - no. of channels in sino
+            g['angles'],                              # total number of angles for entire images
+            self.machine_geometry['source_origin'],   # distance between source and origin
+            self.machine_geometry['origin_det'])      # distance between detector and origin
+
         self.logger.info("Done processing reconstruction geometry...")
+
     # -------------------------------------------------------------------------
 
     def _set_parallel_beam_geometry(self):
